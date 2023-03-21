@@ -12,7 +12,7 @@ contract MyEpicNFT is ERC721URIStorage {
   
   using Counters for Counters.Counter;
   Counters.Counter private _tokenIds;
-
+  uint256 usedSupply = 0;
   uint256 maxSupply = 25;
 
   string svgPartOne = "<svg xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='xMinYMin meet' viewBox='0 0 350 350'><style>.base { fill: white; font-family: serif; font-size: 24px; }</style><rect width='100%' height='100%' fill='";
@@ -23,6 +23,7 @@ contract MyEpicNFT is ERC721URIStorage {
   string[] thirdWords = ["Friend", "Party", "Day", "Night", "Meeting", "Chill"];
 
   string[] colors = ["#1B262C", "#0F4C75", "#3282B8", "#BBE1FA", "#150050", "#3F0071"];
+  // string[] colors = ["red", "blue", "yellow", "green", "grey", "purple"];
 
   event NewEpicNFTMinted(address sender, uint256 tokenId);
 
@@ -47,8 +48,8 @@ contract MyEpicNFT is ERC721URIStorage {
     rand = rand % thirdWords.length;
     return thirdWords[rand];
   }
-
-    function pickRandomColor(uint256 tokenId) public view returns (string memory) {
+  
+  function pickRandomColor(uint256 tokenId) public view returns (string memory) {
     uint256 rand = random(string(abi.encodePacked("COLOR", Strings.toString(tokenId))));
     rand = rand % colors.length;
     return colors[rand];
@@ -60,15 +61,15 @@ contract MyEpicNFT is ERC721URIStorage {
 
   // A function our user will hit to get their NFT.
   function makeAnEpicNFT() public {
-    require(_tokenIds.current() + 1 > maxSupply, "max NFT limit exceeded");    
-    
+    require(_tokenIds.current() < maxSupply, "total supply exceeded");
+
     uint256 newItemId = _tokenIds.current();
+    
     
     string memory first = pickRandomFirstWord(newItemId);
     string memory second = pickRandomSecondWord(newItemId);
     string memory third = pickRandomThirdWord(newItemId);
     string memory combinedWord = string(abi.encodePacked(first, second, third));
-
 
     string memory randomColor = pickRandomColor(newItemId);
     string memory finalSvg = string(abi.encodePacked(svgPartOne, randomColor, svgPartTwo, combinedWord, "</text></svg>"));
@@ -101,12 +102,13 @@ contract MyEpicNFT is ERC721URIStorage {
     
     _setTokenURI(newItemId, finalTokenUri);
     console.log("An NFT w/ ID %s has been minted to %s", newItemId, msg.sender);
-
+    
     _tokenIds.increment();
+    usedSupply = usedSupply + 1;
     emit NewEpicNFTMinted(msg.sender, newItemId);
   }
 
   function getTotalNFTsMintedSoFar() public view returns (uint256) {
-    return _tokenIds.current() + 1;
+    return usedSupply;
   }
 }
